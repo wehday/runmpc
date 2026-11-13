@@ -19,6 +19,18 @@ _Avoid_: platform, hardware, model
 **Install method**:
 How an Item gets onto a Target device, such as from the SD card, through a modded image, or over SSH.
 
+**Author**:
+The person or group who makes an Item. RunMPC credits them and points people to the channels they choose.
+_Avoid_: developer, creator, maintainer
+
+**Licence**:
+The terms under which an Author lets others use, change or share an Item. Shown only when the Item has one.
+_Avoid_: license (US spelling in prose), terms
+
+**Game data requirement**:
+An Item that only works with commercial game data the user already owns and supplies themselves.
+_Avoid_: ROM requirement
+
 **Firmware requirement**:
 The stock Akai firmware version an Item needs in order to run.
 _Avoid_: OS version, compatibility
@@ -28,6 +40,10 @@ _Avoid_: OS version, compatibility
 **Submission**:
 A request from a member of the public to add an Item to the catalogue. It is not an Item until it has been accepted.
 _Avoid_: suggestion, entry
+
+**Delisting**:
+Removing an Item from the catalogue because its Author asked. Handled by hand by the owner.
+_Avoid_: takedown, removal request
 
 **Interest registration**:
 A person's request to be told when community accounts open. Making a Submission also counts as an Interest registration.
