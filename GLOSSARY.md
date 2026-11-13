@@ -13,7 +13,7 @@ The one kind of thing an Item is, such as a mod, an app, a bootloader, a plugin 
 _Avoid_: type, tag, kind
 
 **Target device**:
-A piece of Akai hardware an Item runs on, such as the MPC Sample, MPC Live / X / One or Force. An Item has one or more Target devices.
+A specific model of Akai hardware an Item runs on, such as the MPC Sample, MPC Live II, MPC One+ or Force. An Item has one or more Target devices.
 _Avoid_: platform, hardware, model
 
 **Install method**:
@@ -30,6 +30,10 @@ _Avoid_: license (US spelling in prose), terms
 **Game data requirement**:
 An Item that only works with commercial game data the user already owns and supplies themselves.
 _Avoid_: ROM requirement
+
+**Maturity**:
+How ready an Item's Author says it is: stable or beta.
+_Avoid_: status, stability
 
 **Firmware requirement**:
 The stock Akai firmware version an Item needs in order to run.
