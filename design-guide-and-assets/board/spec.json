@@ -1,0 +1,55 @@
+{
+  "brand": "RunMPC",
+  "tagline": "The Akai MPC software community",
+  "brief": "A clean, modern wordmark for a community site for Akai MPC software users. It should feel like a music-tech brand: refined and confident, with one clever detail instead of retro or blocky styling, and work as a 16 px favicon.",
+  "adjectives": [
+    "modern",
+    "confident",
+    "musical",
+    "community"
+  ],
+  "criteria": "Success: reads instantly as runmpc, carries one ownable idea, holds at 16 px, works in one colour and reversed, avoids the Run-D.M.C. block look.",
+  "mockups": [
+    "website",
+    "favicon-tab",
+    "app-icon",
+    "social",
+    "sticker",
+    "tshirt"
+  ],
+  "nav": [
+    "Forum",
+    "Tutorials",
+    "Kits",
+    "Join"
+  ],
+  "brand_color": "#FF4B2B",
+  "greyscale": false,
+  "final": true,
+  "designer": "RunMPC",
+  "round": 2,
+  "concepts": [
+    {
+      "name": "Sine",
+      "symbol": "../export/runmpc-symbol-color.svg",
+      "lockup": "../export/runmpc-wordmark-color.svg",
+      "stacked": "../export/runmpc-stacked-color.svg",
+      "avatar": "../export/runmpc-symbol-app-icon.svg",
+      "symbol_on_tile": "../export/runmpc-symbol-white.svg",
+      "lockup_on_dark": "../export/runmpc-wordmark-reversed.svg",
+      "tile_color": "#0E0E12",
+      "idea": "The 'un' in run is one continuous sine wave: the name carries a sound wave.",
+      "rationale": [
+        "One ownable detail inside a clean lowercase wordmark",
+        "The wave stands alone as favicon, app icon and avatar",
+        "Built from circles and straight stems only, monoline, with optical overshoot"
+      ]
+    }
+  ],
+  "recommendation": "Sine: final artwork, variants, web icon set and usage guide delivered.",
+  "next_steps": [
+    "Trademark search before public launch",
+    "Roll out favicon and header on the site",
+    "Optional: extend the wave into dividers, loaders and motion"
+  ]
+}
