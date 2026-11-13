@@ -1,0 +1,292 @@
+<!doctype html>
+<!--
+  PROTOTYPE, throwaway. Answers wehday/runmpc#6 "Prototype the catalogue page layout and filters".
+  Three variants of the catalogue page, switchable via ?variant=A|B|C (or the bottom bar / arrow keys).
+  Data follows the schema decided in #5. Devices list is provisional until #11 (hardware generations) lands.
+  Melodee's second screenshot is a duplicate, only there to demo paging.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RunMPC catalogue (prototype)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{--orange:#FF4B2B;--black:#0E0E12;--text-orange:#CC3618;--paper:#F6F5F1;--white:#fff;--muted:#5b5b66;--line:#e2e0d8;
+  --head:Manrope,system-ui,-apple-system,"Segoe UI",sans-serif;--body:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--black);font:15px/1.5 var(--body)}
+a{color:var(--text-orange)}
+h1,h2,h3{font-family:var(--head);margin:0}
+button{font:inherit;cursor:pointer}
+.tag{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;background:#ebe9e2;color:var(--black);white-space:nowrap}
+.tag.beta{background:#fff0d6}.tag.inactive{background:#e6e6ea;color:var(--muted)}.tag.game{background:var(--black);color:#fff}
+.tag.feat{background:var(--orange);color:var(--black)}
+h2.sec{font-size:13px;text-transform:uppercase;letter-spacing:.08em;margin:8px 0 12px;color:var(--muted)}
+.tag.lic{background:transparent;border:1px solid var(--line);color:var(--muted)}
+.muted{color:var(--muted)}
+.target{outline:3px solid var(--orange);outline-offset:4px}
+.ph{background:var(--black);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;color:#fff;font:600 12px var(--body)}
+.ph img{width:56px}
+.shot{position:relative;background:var(--black);overflow:hidden}
+.shot img.s{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in}
+.shot .nav{position:absolute;top:50%;transform:translateY(-50%);border:0;background:rgba(14,14,18,.7);color:#fff;width:30px;height:30px;border-radius:50%}
+.shot .prev{left:6px}.shot .next{right:6px}
+.shot .count{position:absolute;right:8px;bottom:6px;font-size:11px;color:#fff;background:rgba(14,14,18,.7);padding:1px 6px;border-radius:8px}
+.socials a{margin-right:8px;font-size:13px}
+.cta{display:inline-block;padding:10px 16px;border-radius:8px;font-weight:600;text-decoration:none}
+.cta.primary{background:var(--orange);color:var(--black)}
+.cta.ghost{border:1.5px solid currentColor;color:inherit}
+footer.site{padding:28px 16px 90px;text-align:center;font-size:13px;color:var(--muted)}
+/* lightbox */
+#lb{position:fixed;inset:0;background:rgba(14,14,18,.92);display:none;align-items:center;justify-content:center;z-index:50}
+#lb.open{display:flex}#lb img{max-width:92vw;max-height:80vh}
+#lb button{position:fixed;border:0;background:#fff;color:var(--black);border-radius:50%;width:44px;height:44px;font-size:20px}
+#lb .x{top:16px;right:16px}#lb .p{left:16px;top:50%}#lb .n{right:16px;top:50%}
+#lb .cap{position:fixed;bottom:70px;color:#fff;font-size:13px;text-align:center;width:100%}
+/* prototype switcher */
+#switch{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#222;color:#fff;border-radius:999px;padding:6px 8px;display:flex;gap:8px;align-items:center;box-shadow:0 6px 24px rgba(0,0,0,.35);z-index:60;font:600 13px system-ui}
+#switch button{background:#444;color:#fff;border:0;border-radius:50%;width:28px;height:28px}
+
+/* ---------- A: Sidebar + card grid ---------- */
+.A header{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;background:var(--white);border-bottom:1px solid var(--line);gap:16px;flex-wrap:wrap}
+.A header img{height:36px}
+.A .wrap{display:grid;grid-template-columns:260px 1fr;gap:24px;padding:24px;max-width:1300px;margin:auto}
+.A aside{position:sticky;top:16px;align-self:start;background:var(--white);border:1px solid var(--line);border-radius:12px;padding:16px}
+.A aside h3{font-size:13px;text-transform:uppercase;letter-spacing:.06em;margin:14px 0 6px}
+.A aside label{display:block;font-size:14px}
+.A aside .fam{font-size:12px;color:var(--muted);margin-top:8px}
+.A input[type=search]{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px}
+.A .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px}
+.A .card{background:var(--white);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.A .card .shot,.A .card .ph{aspect-ratio:4/3}
+.A .card .b{padding:14px;display:flex;flex-direction:column;gap:8px;flex:1}
+.A .card h2{font-size:18px}
+.A .card .tags{display:flex;gap:6px;flex-wrap:wrap}
+.A .card .req{font-size:13px;background:var(--paper);border-radius:8px;padding:6px 8px}
+.A .card .act{margin-top:auto;display:flex;gap:10px;align-items:center;justify-content:space-between}
+.A .count{margin:0 0 12px}
+@media(max-width:800px){.A .wrap{grid-template-columns:1fr;padding:16px}.A aside{position:static}}
+
+/* ---------- B: Dense rack list ---------- */
+.B{background:var(--black);color:#eee}
+.B a{color:var(--orange)}
+.B header{padding:16px 24px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;border-bottom:1px solid #2a2a33}
+.B header img{height:30px}
+.B header .ctas{margin-left:auto;display:flex;gap:10px}
+.B .bar{position:sticky;top:0;background:var(--black);z-index:5;padding:12px 24px;display:flex;gap:10px;flex-wrap:wrap;border-bottom:1px solid #2a2a33}
+.B select,.B input{background:#1b1b22;color:#eee;border:1px solid #33333d;border-radius:6px;padding:7px 10px}
+.B .chips{display:flex;gap:6px;flex-wrap:wrap}
+.B .chip{background:#1b1b22;border:1px solid #33333d;color:#ccc;border-radius:999px;padding:4px 12px;font-size:13px}
+.B .chip.on{background:var(--orange);color:var(--black);border-color:var(--orange)}
+.B table{width:100%;border-collapse:collapse;max-width:1300px;margin:0 auto}
+.B th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#888;padding:10px 12px;border-bottom:1px solid #2a2a33}
+.B td{padding:10px 12px;border-bottom:1px solid #1f1f27;vertical-align:top;font-size:14px}
+.B tr.row{cursor:pointer}.B tr.row:hover td{background:#16161c}
+.B tr.row td:first-child{font-weight:600;color:#fff}
+.B .tag{background:#26262f;color:#ddd}.B .tag.beta{background:#4a3a14;color:#ffd58a}.B .tag.game{background:var(--orange);color:var(--black)}
+.B .tag.lic{border-color:#33333d;color:#aaa}
+.B tr.detail td{background:#15151b;padding:16px}
+.B .det{display:grid;grid-template-columns:360px 1fr;gap:20px}
+.B .det .shot,.B .det .ph{aspect-ratio:4/3;border-radius:8px}
+.B .muted{color:#999}
+.B .hide-sm{}
+@media(max-width:800px){.B .hide-sm{display:none}.B .det{grid-template-columns:1fr}}
+
+/* ---------- C: Device-first, feature rows ---------- */
+.C header{background:var(--black);color:#fff;padding:40px 24px 32px;text-align:center}
+.C header img{height:52px}
+.C header h1{font-size:28px;margin:18px 0 6px}
+.C .devs{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:18px;max-width:1000px;margin-inline:auto}
+.C .dev{background:#1b1b22;color:#fff;border:1.5px solid #33333d;border-radius:10px;padding:10px 14px;min-width:110px}
+.C .dev.on{border-color:var(--orange);background:#2a1510}
+.C .dev small{display:block;color:#999;font-size:11px}
+.C nav.tabs{display:flex;gap:4px;overflow-x:auto;padding:0 24px;background:var(--white);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.C nav.tabs button{border:0;background:none;padding:14px 14px;font-weight:600;border-bottom:3px solid transparent;white-space:nowrap}
+.C nav.tabs button.on{border-color:var(--orange)}
+.C main{max-width:1000px;margin:0 auto;padding:24px 16px}
+.C .feat{display:grid;grid-template-columns:1.1fr 1fr;gap:24px;background:var(--white);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-bottom:22px}
+.C .feat:nth-child(even){grid-template-columns:1fr 1.1fr}.C .feat:nth-child(even) .media{order:2}
+.C .feat .media .shot,.C .feat .media .ph{height:100%;min-height:240px}
+.C .feat .b{padding:22px 22px 22px 0;display:flex;flex-direction:column;gap:10px}
+.C .feat:nth-child(even) .b{padding:22px 0 22px 22px}
+.C .feat h2{font-size:24px}
+.C dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;font-size:14px}.C dt{color:var(--muted)}.C dd{margin:0}
+.C .sticky{position:fixed;left:0;right:0;bottom:0;background:var(--orange);color:var(--black);display:flex;gap:12px;align-items:center;justify-content:center;padding:10px 16px 60px;flex-wrap:wrap;z-index:40;font-weight:600}
+.C .sticky .cta.ghost{border-color:var(--black)}
+.C footer.site{padding-bottom:150px}
+@media(max-width:800px){.C .feat,.C .feat:nth-child(even){grid-template-columns:1fr}.C .feat .b,.C .feat:nth-child(even) .b{padding:16px}.C .feat:nth-child(even) .media{order:0}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="lb" role="dialog" aria-modal="true" aria-label="Screenshot viewer"><img alt=""><div class="cap"></div>
+  <button class="x" aria-label="Close">×</button><button class="p" aria-label="Previous">‹</button><button class="n" aria-label="Next">›</button></div>
+<div id="switch"><button data-d="-1" aria-label="Previous variant">‹</button><span id="vlabel"></span><button data-d="1" aria-label="Next variant">›</button></div>
+
+<script>
+const LOGO='../design-guide-and-assets/';
+const FORMS={submit:'https://tally.so/r/PROTOTYPE-submit',interest:'https://tally.so/r/PROTOTYPE-interest'};
+const categories=[{id:'mod',label:'Mod'},{id:'app',label:'App'},{id:'game',label:'Game'},{id:'boot',label:'Boot / Firmware'},{id:'plugin',label:'Plugin'},{id:'dev-library',label:'Dev library'},{id:'research',label:'Research'}];
+const devices=[ // from #11 research
+ {id:'mpc-sample',label:'MPC Sample',family:'mpc-sample',generation:null},
+ {id:'mpc-live',label:'MPC Live',family:'mpc-standalone',generation:'gen1'},{id:'mpc-live-ii',label:'MPC Live II',family:'mpc-standalone',generation:'gen1'},
+ {id:'mpc-x',label:'MPC X',family:'mpc-standalone',generation:'gen1'},{id:'mpc-x-se',label:'MPC X SE',family:'mpc-standalone',generation:'gen1'},
+ {id:'mpc-one',label:'MPC One',family:'mpc-standalone',generation:'gen1'},{id:'mpc-one-plus',label:'MPC One+',family:'mpc-standalone',generation:'gen1'},
+ {id:'mpc-key-37',label:'MPC Key 37',family:'mpc-standalone',generation:'gen1'},{id:'mpc-key-61',label:'MPC Key 61',family:'mpc-standalone',generation:'gen1'},
+ {id:'mpc-live-iii',label:'MPC Live III',family:'mpc-standalone',generation:'gen2'},{id:'mpc-xl',label:'MPC XL',family:'mpc-standalone',generation:'gen2'},
+ {id:'mpc-one-g2',label:'MPC One G2',family:'mpc-standalone',generation:'gen2'},{id:'mpc-key-37-g2',label:'MPC Key 37 G2',family:'mpc-standalone',generation:'gen2'},
+ {id:'force',label:'Force',family:'force',generation:'gen1'}];
+const families={'mpc-sample':'MPC Sample','mpc-standalone':'MPC standalone','force':'Force'};
+const groups=[['MPC Sample',d=>d.family==='mpc-sample'],['MPC Gen 1 (incl. Force)',d=>d.generation==='gen1'],['MPC Gen 2',d=>d.generation==='gen2']];
+const installMethods=[{id:'sd-autorun',label:'SD card autorun'},{id:'boot-menu',label:'Boot menu (mpc-boot-thingy)'},{id:'modded-image',label:'Modded firmware image'},{id:'ssh',label:'SSH'},{id:'plugin-manager',label:'Plugin manager'},{id:'installer',label:'Installer'},{id:'build-from-source',label:'Build from source'}];
+const gh=h=>({id:h,name:h,url:'https://github.com/'+h,socials:{github:'https://github.com/'+h}});
+const A={garrett:gh('garrettjwilke'),kerem:{id:'keremimo',name:'Kerem Kiliç (Ellic Studio)',url:'https://github.com/keremimo',socials:{github:'https://github.com/keremimo'}},kik:{id:'TheKikGen',name:'TheKikGen',url:'https://github.com/TheKikGen',socials:{github:'https://github.com/TheKikGen'}}};
+const SA=['mpc-live','mpc-live-ii','mpc-x','mpc-one','mpc-key-61','force'];
+const R=(o)=>Object.assign({firmware:undefined,maturity:'stable',requires:{gameData:false,items:[],notes:[]},screenshots:[],added:'2026-11-13'},o);
+const featured=['sampqol-os','gridzilla','melodee','mpc-minimod','hakai','open-mpc']; // ordered
+const items=[
+R({slug:'mpc-livexplore',name:'MPC-LiveXplore',summary:'Research log and wiki: SSH firmware images, IamForce, VNC4MPC and the autorun hack.',category:'research',devices:SA,install:['modded-image'],firmware:'MPC 2.14 / 3.4.2.13, Force 3.3.0',requires:{gameData:false,items:[],notes:['Downloads hosted on Google Drive']},authors:[A.kik],links:{home:'https://github.com/TheKikGen/MPC-LiveXplore'},screenshots:[{url:'https://img.youtube.com/vi/Ivp53UNk8ck/0.jpg',alt:'IamForce2 video thumbnail'}],updated:'2026-11-11'}),
+R({slug:'mpclivexplore-libs',name:'MPCLiveXplore-libs',summary:'LD_PRELOAD libraries for MIDI mapping and controller hacks on modded MPC and Force.',category:'dev-library',devices:SA,install:['ssh','modded-image'],requires:{gameData:false,items:['mpc-livexplore'],notes:[]},licence:'CC0-1.0',authors:[A.kik],links:{home:'https://github.com/TheKikGen/MPCLiveXplore-libs'},updated:'2023-12-13'}),
+R({slug:'mpc-livexplore-bootstrap',name:'MPC-LiveXplore-bootstrap',summary:'Boot-time launcher for rtpmidid, IamForce2, VNC4MPC and other modules.',category:'boot',devices:SA,install:['modded-image'],requires:{gameData:false,items:['mpc-livexplore'],notes:['ext4 SD card or USB stick preferred']},authors:[A.kik],links:{home:'https://github.com/TheKikGen/MPC-LiveXplore-bootstrap'},updated:'2023-11-30'}),
+R({slug:'hakai',name:'HAKAI',summary:'Ready-to-use payload of custom apps, plugins and system enhancements for MPC.',category:'mod',devices:['mpc-x','mpc-x-se','mpc-live','mpc-live-ii','mpc-one','mpc-one-plus','mpc-key-37','mpc-key-61','force','mpc-live-iii','mpc-xl','mpc-one-g2'],install:['installer'],requires:{gameData:false,items:[],notes:['exFAT storage','Separate Gen1 and Gen2 packages']},licence:'proprietary-freeware',authors:[{id:'medampire',name:'medampire',url:'https://github.com/medampire',socials:{github:'https://github.com/medampire',support:'https://ko-fi.com/hakaidev'}}],links:{home:'https://github.com/medampire/HAKAI',download:'https://github.com/medampire/HAKAI/releases'},updated:'2026-11-13'}),
+R({slug:'mpc-boot-thingy',name:'mpc-boot-thingy',summary:'Boot menu that lets several autorun apps and mods live side by side on one card.',category:'boot',devices:['mpc-sample'],install:['sd-autorun'],requires:{gameData:false,items:[],notes:['USB web tool at mpc-sample.local/testapp']},authors:[A.garrett],links:{home:'https://github.com/garrettjwilke/mpc-boot-thingy'},updated:'2026-11-11'}),
+R({slug:'open-mpc',name:'OpenMPC',summary:'Community plugin catalogue and on-device Plugin Manager for MPC OS.',category:'plugin',devices:['mpc-one-plus','mpc-x','mpc-live','mpc-live-iii','force'],install:['plugin-manager','ssh'],firmware:'3.10.1 (installers for 3.9.1 and earlier)',authors:[{id:'open-mpc',name:'open-mpc',url:'https://github.com/open-mpc',socials:{github:'https://github.com/open-mpc'}}],links:{home:'https://open-mpc.github.io/'},updated:'2026-11-13'}),
+R({slug:'melodee',name:'Melodee',summary:'16-track groovebox that replaces the stock MPC Sample app, with VST3/VST2 hosting.',category:'app',devices:['mpc-sample'],install:['sd-autorun'],firmware:'1.3.0.12',licence:'AGPL-3.0-only',authors:[A.kerem],links:{home:'https://github.com/keremimo/melodee-sample',download:'https://github.com/keremimo/melodee-sample/releases'},screenshots:[{url:'https://raw.githubusercontent.com/keremimo/melodee-sample/HEAD/docs/images/melodee-promo.png',alt:'Melodee promo screen'},{url:'https://raw.githubusercontent.com/keremimo/melodee-sample/HEAD/docs/images/melodee-promo.png',alt:'Melodee promo screen (duplicate to demo paging)'}],updated:'2026-11-12'}),
+R({slug:'am-mod',name:'Am MOD',summary:'Patches the stock app in RAM to add chords, workflow and sequencing features.',category:'mod',devices:['mpc-sample'],install:['sd-autorun','installer'],firmware:'1.3.0.12',requires:{gameData:false,items:[],notes:['exFAT card (FAT32 experimental)']},licence:'MIT',authors:[gh('AlekseyMalykh')],links:{home:'https://github.com/AlekseyMalykh/am-mod'},screenshots:[{url:'https://raw.githubusercontent.com/AlekseyMalykh/am-mod/HEAD/docs/media/chords.gif',alt:'Am MOD chord mode'}],updated:'2026-11-13'}),
+R({slug:'sampqol-os',name:'SampQOL OS',summary:'Quality-of-life overhaul for the MPC Sample.',category:'mod',devices:['mpc-sample'],install:['sd-autorun'],firmware:'1.3.0.12',maturity:'beta',licence:'proprietary-freeware',authors:[{id:'snarebes',name:'Snare Bes',url:'https://github.com/snarebes',socials:{github:'https://github.com/snarebes'}}],links:{home:'https://github.com/snarebes/SampQOL-OS',docs:'https://snarebes.github.io/SampQOL-OS/'},updated:'2026-11-08'}),
+R({slug:'sample-base',name:'sample-base',summary:'JUCE application base for building native MPC Sample apps, with demos.',category:'dev-library',devices:['mpc-sample'],install:['sd-autorun','ssh'],firmware:'1.3.0.12',licence:'AGPL-3.0-only',authors:[A.kerem],links:{home:'https://github.com/keremimo/sample-base'},updated:'2026-11-11'}),
+R({slug:'gridzilla',name:'Gridzilla',summary:'Firmware mod with a DAW-like sequencing workflow for the MPC Sample.',category:'mod',devices:['mpc-sample'],install:['sd-autorun'],authors:[{id:'thesoundfactorynj',name:'The Sound Factory NJ',url:'https://www.thesoundfactorynj.com',socials:{website:'https://www.thesoundfactorynj.com'}}],links:{home:'https://www.thesoundfactorynj.com/gridzilla'}}),
+R({slug:'mpc-minimod',name:'mpc-minimod',summary:'Small mod: AutoTrim, octave shift, HPSS, Spectral Chop and a live looper.',category:'mod',devices:['mpc-sample'],install:['sd-autorun'],firmware:'1.3.0.12',authors:[gh('ioma8')],links:{home:'https://github.com/ioma8/mpc-minimod'},screenshots:[{url:'https://raw.githubusercontent.com/ioma8/mpc-minimod/HEAD/docs/images/menu.png',alt:'mpc-minimod menu'}],updated:'2026-11-12'}),
+R({slug:'kaosample-beta',name:'KaoSample',summary:'RAM-resident mod for the MPC Sample.',category:'mod',devices:['mpc-sample'],install:['sd-autorun'],firmware:'1.3.0.12',maturity:'beta',licence:'proprietary-freeware',authors:[{id:'omarhuertasllc-ops',name:'Omar Huertas LLC',url:'https://github.com/omarhuertasllc-ops',socials:{github:'https://github.com/omarhuertasllc-ops'}}],links:{home:'https://github.com/omarhuertasllc-ops/kaosample-beta',download:'https://github.com/omarhuertasllc-ops/kaosample-beta/releases'},updated:'2026-11-07'}),
+R({slug:'looppad',name:'LoopPad',summary:'Loop-based performance app for the MPC Sample.',category:'app',devices:['mpc-sample'],install:['boot-menu','build-from-source'],maturity:'beta',requires:{gameData:false,items:['mpc-boot-thingy'],notes:['No binary releases yet']},licence:'MIT',authors:[gh('larsoholm')],links:{home:'https://github.com/larsoholm/LoopPad'},updated:'2026-11-05'}),
+R({slug:'beat-train-mpc-sample',name:'Beat Train',summary:'Drum rhythm game played on the pads, using Clone Hero song folders.',category:'game',devices:['mpc-sample'],install:['sd-autorun'],firmware:'1.3.0.x',requires:{gameData:false,items:[],notes:['exFAT card']},licence:'MIT',authors:[gh('drose030')],links:{home:'https://github.com/drose030/beat-train-mpc-sample'},screenshots:[{url:'https://raw.githubusercontent.com/drose030/beat-train-mpc-sample/HEAD/docs/images/library.png',alt:'Beat Train song library'}],updated:'2026-11-07'}),
+R({slug:'mpc-furnace',name:'mpc-furnace',summary:'The Furnace chiptune tracker on the MPC Sample.',category:'app',devices:['mpc-sample'],install:['sd-autorun','boot-menu'],authors:[A.garrett],links:{home:'https://github.com/garrettjwilke/mpc-furnace'},updated:'2026-10-31'}),
+R({slug:'mpc-gen1recomp',name:'mpc-gen1recomp',summary:'Native Pokémon Red/Blue/Yellow runtime for the MPC Sample.',category:'game',devices:['mpc-sample'],install:['sd-autorun','boot-menu'],requires:{gameData:true,items:[],notes:[]},authors:[A.garrett],links:{home:'https://github.com/garrettjwilke/mpc-gen1recomp'},updated:'2026-11-11'}),
+R({slug:'mpc-cavestory',name:'mpc-cavestory',summary:'Cave Story (doukutsu-rs) ported to the MPC Sample.',category:'game',devices:['mpc-sample'],install:['sd-autorun','boot-menu'],requires:{gameData:true,items:[],notes:[]},authors:[A.garrett],links:{home:'https://github.com/garrettjwilke/mpc-cavestory'},updated:'2026-10-31'}),
+R({slug:'mpc-tic80',name:'mpc-tic80',summary:'Play TIC-80 fantasy-console games on the MPC Sample.',category:'game',devices:['mpc-sample'],install:['sd-autorun','boot-menu'],authors:[A.garrett],links:{home:'https://github.com/garrettjwilke/mpc-tic80'},updated:'2026-10-31'}),
+R({slug:'mpc-ui-toolkit',name:'mpc-ui-toolkit',summary:'C drawing and widget library for the MPC Sample’s 320×240 screen.',category:'dev-library',devices:['mpc-sample'],install:['sd-autorun','boot-menu'],licence:'CC0-1.0',authors:[A.garrett],links:{home:'https://github.com/garrettjwilke/mpc-ui-toolkit'},updated:'2026-11-10'}),
+];
+
+// ---- shared helpers ----
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const cat=id=>categories.find(c=>c.id===id).label;
+const dev=id=>devices.find(d=>d.id===id).label;
+const inst=id=>installMethods.find(m=>m.id===id).label;
+const inactive=i=>i.updated&&(Date.parse('2026-11-13')-Date.parse(i.updated))>365*864e5;
+const lic=l=>l==='proprietary-freeware'?'Proprietary freeware':l;
+const SOC={x:'X',instagram:'Instagram',youtube:'YouTube',discord:'Discord',github:'GitHub',website:'Website',support:'Support ♥'};
+const state={devices:new Set(),categories:new Set(),install:new Set(),q:'',open:null};
+const fRank=i=>{const r=featured.indexOf(i.slug);return r<0?99:r};
+const noFilters=()=>!state.devices.size&&!state.categories.size&&!state.install.size&&!state.q;
+function filtered(){return items.filter(i=>
+  (!state.devices.size||i.devices.some(d=>state.devices.has(d)))&&
+  (!state.categories.size||state.categories.has(i.category))&&
+  (!state.install.size||i.install.some(m=>state.install.has(m)))&&
+  (!state.q||(i.name+' '+i.summary+' '+i.authors.map(a=>a.name).join(' ')).toLowerCase().includes(state.q.toLowerCase()))).sort((a,b)=>fRank(a)-fRank(b))}
+const split=list=>[list.filter(i=>fRank(i)<99),list.filter(i=>fRank(i)===99)];
+const sec=(t,cls)=>`<h2 class="sec ${cls||''}">${t}</h2>`;
+function tags(i){return [fRank(i)<99?'<span class="tag feat">Featured</span>':'',`<span class="tag">${esc(cat(i.category))}</span>`,
+  i.maturity==='beta'?'<span class="tag beta">Beta</span>':'',
+  inactive(i)?'<span class="tag inactive">Inactive</span>':'',
+  i.requires.gameData?'<span class="tag game">Needs your own game data</span>':'',
+  i.licence?`<span class="tag lic">${esc(lic(i.licence))}</span>`:''].join(' ')}
+function authorsHtml(i){return i.authors.map(a=>`<span>by <a href="${esc(a.url)}">${esc(a.name)}</a></span> <span class="socials">${Object.entries(a.socials||{}).map(([k,u])=>`<a href="${esc(u)}">${SOC[k]||k}</a>`).join('')}</span>`).join('<br>')}
+function reqHtml(i){const r=[];if(i.firmware)r.push('Firmware '+esc(i.firmware));
+  i.requires.items.forEach(s=>r.push(`Needs <a href="#${s}">${esc(items.find(x=>x.slug===s).name)}</a>`));
+  i.requires.notes.forEach(n=>r.push(esc(n)));return r.join(' · ')}
+function media(i){if(!i.screenshots.length)return `<div class="ph"><img src="${LOGO}runmpc-symbol-color.svg" alt=""><span>${esc(i.name)}</span></div>`;
+  const s=i.screenshots;return `<div class="shot" data-slug="${i.slug}" data-ix="0"><img class="s" src="${esc(s[0].url)}" alt="${esc(s[0].alt)}" loading="lazy">${s.length>1?`<button class="nav prev" aria-label="Previous screenshot">‹</button><button class="nav next" aria-label="Next screenshot">›</button><span class="count">1 / ${s.length}</span>`:''}</div>`}
+const isGhRepo=u=>/^https:\/\/github\.com\/[^/]+\/[^/]+\/?$/.test(u);
+const dl=i=>i.links.download||(isGhRepo(i.links.home)?i.links.home.replace(/\/$/,'')+'/releases':i.links.home);
+const footer=`<footer class="site">RunMPC lists community software and links to each Author's own page. Nothing is hosted here.<br>Authors: ask to be delisted at <a href="mailto:delist@runmpc.com">delist@runmpc.com</a> · Questions: <a href="mailto:contact@runmpc.com">contact@runmpc.com</a> · <a href="#">Privacy</a></footer>`;
+
+// ---- Variant A: sidebar filters + card grid ----
+function VariantA(){const list=filtered();
+ const fam=groups.map(([l,fn],gi)=>`<div class="fam">${l} <button data-group="${gi}" style="border:0;background:none;color:var(--text-orange);font-size:12px">all</button></div>`+devices.filter(fn).map(d=>`<label><input type="checkbox" data-k="devices" value="${d.id}" ${state.devices.has(d.id)?'checked':''}> ${d.label}</label>`).join('')).join('');
+ return `<div class="A"><header><img src="${LOGO}runmpc-wordmark-color.svg" alt="RunMPC"><span class="muted">Community software for MPC and Force</span>
+  <span><a class="cta primary" href="${FORMS.submit}">Submit an Item</a> <a class="cta ghost" href="${FORMS.interest}">Get notified</a></span></header>
+ <div class="wrap"><aside><input type="search" placeholder="Search" value="${esc(state.q)}" data-k="q">
+  <h3>Target device</h3>${fam}
+  <h3>Category</h3>${categories.map(c=>`<label><input type="checkbox" data-k="categories" value="${c.id}" ${state.categories.has(c.id)?'checked':''}> ${c.label} <span class="muted">(${items.filter(i=>i.category===c.id).length})</span></label>`).join('')}
+  <h3>Install method</h3>${installMethods.map(m=>`<label><input type="checkbox" data-k="install" value="${m.id}" ${state.install.has(m.id)?'checked':''}> ${m.label}</label>`).join('')}
+ </aside><section><p class="count muted">Showing ${list.length} of ${items.length} Items</p>${(noFilters()?split(list):[[],list]).map((part,pi)=>!part.length?'':(noFilters()?sec(pi?'All Items':'Featured'):'')+`<div class="grid" style="margin-bottom:28px">${part.map(i=>`<article class="card" id="${i.slug}">${media(i)}<div class="b"><div class="tags">${tags(i)}</div><h2>${esc(i.name)}</h2><div>${esc(i.summary)}</div>
+  <div class="muted" style="font-size:13px">${i.devices.map(dev).join(', ')}<br>${i.install.map(inst).join(' or ')}</div>
+  ${reqHtml(i)?`<div class="req">${reqHtml(i)}</div>`:''}<div style="font-size:13px">${authorsHtml(i)}</div>
+  <div class="act"><a class="cta primary" href="${esc(dl(i))}">Get it</a><a href="#${i.slug}" class="muted" style="font-size:12px">#${i.slug}</a></div></div></article>`).join('')}</div>`).join('')}
+ </section></div>${footer}</div>`}
+
+// ---- Variant B: dense rack list with chip filters and inline expand ----
+function VariantB(){const list=filtered();
+ return `<div class="B"><header><img src="${LOGO}runmpc-wordmark-reversed.svg" alt="RunMPC"><span class="muted">${items.length} community mods, apps and tools for MPC and Force</span>
+  <span class="ctas"><a class="cta primary" href="${FORMS.submit}">Submit</a><a class="cta ghost" href="${FORMS.interest}">Get notified</a></span></header>
+ <div class="bar"><input type="search" placeholder="Search name, Author, summary" value="${esc(state.q)}" data-k="q" style="min-width:240px">
+  <select data-k="devsel"><option value="">All devices</option>${groups.map(([l,fn])=>`<optgroup label="${l}">${devices.filter(fn).map(d=>`<option value="${d.id}" ${state.devices.has(d.id)?'selected':''}>${d.label}</option>`).join('')}</optgroup>`).join('')}</select>
+  <div class="chips">${categories.map(c=>`<button class="chip ${state.categories.has(c.id)?'on':''}" data-chip="${c.id}">${c.label}</button>`).join('')}</div>
+  <span class="muted" style="margin-left:auto;align-self:center">${list.length} shown</span></div>
+ <table><thead><tr><th>Item</th><th>Category</th><th class="hide-sm">Devices</th><th class="hide-sm">Install</th><th class="hide-sm">Author</th><th class="hide-sm">Updated</th></tr></thead><tbody>
+ ${list.map((i,ix)=>(noFilters()&&ix===featured.length?`<tr><td colspan="6" style="color:#888;font-size:11px;text-transform:uppercase;letter-spacing:.08em;padding-top:22px">All Items</td></tr>`:'')+(noFilters()&&ix===0?`<tr><td colspan="6" style="color:var(--orange);font-size:11px;text-transform:uppercase;letter-spacing:.08em">Featured</td></tr>`:'')+`<tr class="row" id="${i.slug}" data-open="${i.slug}"><td>${esc(i.name)}<div class="muted" style="font-weight:400;font-size:13px">${esc(i.summary)}</div></td><td>${tags(i)}</td>
+  <td class="hide-sm">${i.devices.length>3?esc(families[devices.find(d=>d.id===i.devices[0]).family])+' ('+i.devices.length+' models)':i.devices.map(dev).join(', ')}</td><td class="hide-sm">${i.install.map(inst).join(', ')}</td>
+  <td class="hide-sm">${i.authors.map(a=>esc(a.name)).join(', ')}</td><td class="hide-sm muted">${i.updated||'—'}</td></tr>
+  ${state.open===i.slug?`<tr class="detail"><td colspan="6"><div class="det">${media(i)}<div><h2 style="color:#fff">${esc(i.name)}</h2><p>${esc(i.summary)}</p>
+   <p class="muted">${i.devices.map(dev).join(', ')}</p>${reqHtml(i)?`<p>${reqHtml(i)}</p>`:''}<p>${authorsHtml(i)}</p>
+   <p><a class="cta primary" href="${esc(dl(i))}">Get it from the Author</a> ${i.links.docs?`<a class="cta ghost" href="${esc(i.links.docs)}">Docs</a>`:''} <a href="#${i.slug}">#${i.slug}</a></p></div></div></td></tr>`:''}`).join('')}
+ </tbody></table>${footer}</div>`}
+
+// ---- Variant C: device-first hero, category tabs, alternating feature rows, sticky CTA strip ----
+function VariantC(){const list=filtered();const on=[...state.devices][0];
+ return `<div class="C"><header><img src="${LOGO}runmpc-wordmark-reversed.svg" alt="RunMPC"><h1>Which MPC do you have?</h1><div class="muted" style="color:#aaa">Pick yours to see what runs on it.</div>
+  <div class="devs"><button class="dev ${!on?'on':''}" data-dev="">All<small>${items.length} Items</small></button>${devices.map(d=>{const n=items.filter(i=>i.devices.includes(d.id)).length;return `<button class="dev ${on===d.id?'on':''}" data-dev="${d.id}">${d.label}<small>${n} Items</small></button>`}).join('')}</div></header>
+ <nav class="tabs"><button class="${!state.categories.size?'on':''}" data-tab="">All</button>${categories.map(c=>`<button class="${state.categories.has(c.id)?'on':''}" data-tab="${c.id}">${c.label}</button>`).join('')}</nav>
+ <main>${list.map((i,ix)=>(noFilters()&&ix===0?sec('Featured'):'')+(noFilters()&&ix===featured.length?sec('All Items'):'')+`<article class="feat" id="${i.slug}"><div class="media">${media(i)}</div><div class="b"><div>${tags(i)}</div><h2>${esc(i.name)}</h2><p style="margin:0">${esc(i.summary)}</p>
+  <dl><dt>Runs on</dt><dd>${i.devices.map(dev).join(', ')}</dd><dt>Install</dt><dd>${i.install.map(inst).join(' or ')}</dd>${i.firmware?`<dt>Firmware</dt><dd>${esc(i.firmware)}</dd>`:''}
+  ${i.requires.items.length||i.requires.notes.length?`<dt>Needs</dt><dd>${[...i.requires.items.map(s=>`<a href="#${s}">${esc(items.find(x=>x.slug===s).name)}</a>`),...i.requires.notes.map(esc)].join(', ')}</dd>`:''}</dl>
+  <div style="font-size:14px">${authorsHtml(i)}</div><div><a class="cta primary" href="${esc(dl(i))}">Get it</a></div></div></article>`).join('')||'<p>Nothing for this combination yet. <a href="'+FORMS.submit+'">Submit one?</a></p>'}</main>
+ <div class="sticky">Made something for your MPC? <a class="cta ghost" href="${FORMS.submit}">Submit it</a> <a class="cta ghost" href="${FORMS.interest}">Get notified when accounts open</a></div>${footer}</div>`}
+
+// ---- switcher, rendering, events ----
+const VARIANTS={A:['Sidebar + card grid',VariantA],B:['Dense rack list',VariantB],C:['Device-first feature rows',VariantC]};
+const keys=Object.keys(VARIANTS);
+let v=new URLSearchParams(location.search).get('variant');if(!keys.includes(v))v='A';
+function render(keepFocus){const f=document.activeElement&&document.activeElement.dataset.k==='q';
+ document.getElementById('app').innerHTML=VARIANTS[v][1]();
+ document.getElementById('vlabel').textContent=`${v} (${VARIANTS[v][0]})`;
+ if(f){const q=document.querySelector('[data-k=q]');q.focus();q.setSelectionRange(q.value.length,q.value.length)}}
+function go(d){v=keys[(keys.indexOf(v)+d+keys.length)%keys.length];const u=new URL(location);u.searchParams.set('variant',v);history.replaceState(null,'',u);render();deep()}
+document.getElementById('switch').addEventListener('click',e=>{const d=e.target.dataset.d;if(d)go(+d)});
+document.addEventListener('keydown',e=>{if(lb.classList.contains('open')){if(e.key==='Escape')closeLb();if(e.key==='ArrowLeft')lbStep(-1);if(e.key==='ArrowRight')lbStep(1);return}
+ if(e.target.closest('input,textarea,select,[contenteditable]'))return;if(e.key==='ArrowLeft')go(-1);if(e.key==='ArrowRight')go(1)});
+document.addEventListener('input',e=>{const k=e.target.dataset.k;if(!k)return;
+ if(k==='q'){state.q=e.target.value;render()}
+ else if(k==='devsel'){state.devices=new Set(e.target.value?[e.target.value]:[]);render()}
+ else{const s=state[k];e.target.checked?s.add(e.target.value):s.delete(e.target.value);render()}});
+document.addEventListener('click',e=>{const t=e.target;
+ if(t.dataset.group!==undefined){const ids=devices.filter(groups[+t.dataset.group][1]).map(d=>d.id);const all=ids.every(i=>state.devices.has(i));ids.forEach(i=>all?state.devices.delete(i):state.devices.add(i));render();return}
+ if(t.dataset.chip){const s=state.categories;s.has(t.dataset.chip)?s.delete(t.dataset.chip):s.add(t.dataset.chip);render();return}
+ if(t.dataset.tab!==undefined){state.categories=new Set(t.dataset.tab?[t.dataset.tab]:[]);render();return}
+ const dv=t.closest('[data-dev]');if(dv){state.devices=new Set(dv.dataset.dev?[dv.dataset.dev]:[]);render();return}
+ const row=t.closest('tr.row');if(row&&!t.closest('a')){state.open=state.open===row.dataset.open?null:row.dataset.open;render();return}
+ const sh=t.closest('.shot');if(!sh)return;const i=items.find(x=>x.slug===sh.dataset.slug);let ix=+sh.dataset.ix;
+ if(t.classList.contains('nav')){ix=(ix+(t.classList.contains('next')?1:-1)+i.screenshots.length)%i.screenshots.length;sh.dataset.ix=ix;
+  const img=sh.querySelector('img.s');img.src=i.screenshots[ix].url;img.alt=i.screenshots[ix].alt;sh.querySelector('.count').textContent=`${ix+1} / ${i.screenshots.length}`;return}
+ if(t.classList.contains('s'))openLb(i,ix)});
+// lightbox
+const lb=document.getElementById('lb');let lbI,lbX;
+function openLb(i,ix){lbI=i;lbX=ix;showLb();lb.classList.add('open');lb.querySelector('.x').focus()}
+function showLb(){const s=lbI.screenshots[lbX];lb.querySelector('img').src=s.url;lb.querySelector('img').alt=s.alt;
+ lb.querySelector('.cap').textContent=`${lbI.name}: ${s.alt} (${lbX+1} / ${lbI.screenshots.length})`;
+ lb.querySelector('.p').style.display=lb.querySelector('.n').style.display=lbI.screenshots.length>1?'':'none'}
+function lbStep(d){lbX=(lbX+d+lbI.screenshots.length)%lbI.screenshots.length;showLb()}
+function closeLb(){lb.classList.remove('open')}
+lb.addEventListener('click',e=>{if(e.target.classList.contains('x')||e.target===lb)closeLb();if(e.target.classList.contains('p'))lbStep(-1);if(e.target.classList.contains('n'))lbStep(1)});
+// #slug deep links: clear filters that would hide the Item, open it in B, scroll + highlight
+function deep(){const s=location.hash.slice(1);const i=items.find(x=>x.slug===s);if(!i)return;
+ if(!filtered().includes(i)){state.devices.clear();state.categories.clear();state.install.clear();state.q=''}
+ if(v==='B')state.open=s;render();const el=document.getElementById(s);if(!el)return;
+ el.scrollIntoView({block:'center'});el.classList.add('target');setTimeout(()=>el.classList.remove('target'),1600)}
+addEventListener('hashchange',deep);
+render();deep();
+</script>
+</body>
+</html>
